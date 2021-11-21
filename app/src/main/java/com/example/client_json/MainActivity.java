@@ -15,8 +15,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -45,9 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @SuppressLint("StaticFieldLeak")
     @Override
     public void onClick (View view) {
-        String URL = "http://api.languagelayer.com/detect" +
-                "?access_key=f07f3e73f544a34c3bb134783a672b13" +
-                "&query=";
+        String URL = "https://pastebin.com/api/api_post.php"+"?api_dev_key=PH9JEO96KawduwbAScldzSCeHqCbqi0k"+"&api_paste_code=";
 
         String textFromTV = mEditText.getText().toString();
 
@@ -62,8 +62,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             protected String doInBackground (String... strings) {
                 String result = null;
                 String url = strings[0];
+
+                RequestBody formbody = new FormBody.Builder()
+                        .add("name","value")
+                        .build();
+
+
                 Request request = new Request.Builder()
                         .url(url)
+                        .post(formbody)
                         .build();
                 try (Response response = mClient.newCall(request).execute()) {
                     if (!response.isSuccessful() && response.body() == null) {
