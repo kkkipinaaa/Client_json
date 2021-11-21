@@ -1,90 +1,94 @@
 package com.example.client_json;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.annotation.SuppressLint;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, Callback {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private final OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient mClient = new OkHttpClient();
 
-    private Button button;
-    private TextView textView;
-    private EditText editText;
+    private Button mButton;
+    private TextView mTextView;
+    private EditText mEditText;
+    private AsyncTask mAsyncTask;
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initViews();
     }
 
-    private void initViews() {
-        button = findViewById(R.id.button);
-        editText = findViewById(R.id.editText);
-        button.setOnClickListener(this);
-    }
-
-
     @Override
-    protected void onStop() {
+    protected void onStop () {
         super.onStop();
+        mAsyncTask.cancel(true);
     }
 
+    @SuppressLint("StaticFieldLeak")
     @Override
-    public void onClick(View view) {
-        final String URL = "http://api.languagelayer.com/detect" + "? access_key = f07f3e73f544a34c3bb134783a672b13" + "& query = ";
+    public void onClick (View view) {
+        String URL = "http://api.languagelayer.com/detect" +
+                "?access_key=f07f3e73f544a34c3bb134783a672b13" +
+                "&query=";
 
-        String textFromTV = editText.getText().toString();
-        String  U = null;
+        String textFromTV = mEditText.getText().toString();
 
         try {
-            U = URL + URLEncoder.encode(textFromTV, StandardCharsets.UTF_8.toString());
+            URL = URL + URLEncoder.encode(textFromTV, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
-        Request request = new Request.Builder()
-                .url(U)
-                .tag("request")
-                .build();
+        mAsyncTask = new AsyncTask<String, Void, String>() {
+            @Override
+            protected String doInBackground (String... strings) {
+                String result = null;
+                String url = strings[0];
+                Request request = new Request.Builder()
+                        .url(url)
+                        .build();
+                try (Response response = mClient.newCall(request).execute()) {
+                    if (!response.isSuccessful() && response.body() == null) {
+                        result = "Что-то пошло не так!";
+                    } else {
+                        result = response.body().string();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return result;
+            }
 
-        client.newCall(request).enqueue(this);
+            @Override
+            protected void onPostExecute (String s) {
+                mTextView.setText(s);
+            }
+        }.execute(URL);
+
     }
 
-    @Override
-    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-        textView.setText("Что-то пошло не так!");
+    private void initViews () {
+        mButton = findViewById(R.id.button);
+        mEditText = findViewById(R.id.editText);
+        mTextView = findViewById(R.id.textView);
+        mButton.setOnClickListener(this);
     }
-
-    @Override
-    public void onResponse(@NonNull Call call, @NonNull Response response) {
-        if (!response.isSuccessful()) {
-            String message = "Что-то пошло не так!\nОшибка: " + response.code();
-            textView.setText(message);
-        }
-
-        try (ResponseBody responseBody = response.body()) {
-
-        }
-    }
-
 }
