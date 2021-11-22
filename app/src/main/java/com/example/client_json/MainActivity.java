@@ -5,15 +5,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
+
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -27,54 +24,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button mButton;
     private TextView mTextView;
-    private EditText mEditText;
-    private AsyncTask mAsyncTask;
+    private static AsyncTask mAsyncTask;
 
 
     @Override
-    protected void onCreate (Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initViews();
     }
 
     @Override
-    protected void onStop () {
+    protected void onStop() {
         super.onStop();
         mAsyncTask.cancel(true);
     }
 
     @SuppressLint("StaticFieldLeak")
     @Override
-    public void onClick (View view) {
-        String URL = "https://pastebin.com/api/api_post.php"+"?api_dev_key=PH9JEO96KawduwbAScldzSCeHqCbqi0k"+"&api_paste_code=";
+    public void onClick(View view) {
 
-        String textFromTV = mEditText.getText().toString();
+        String URL = "http://10.0.2.2:8095/Test";
 
-        try {
-            URL = URL + URLEncoder.encode(textFromTV, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
 
         mAsyncTask = new AsyncTask<String, Void, String>() {
             @Override
-            protected String doInBackground (String... strings) {
+            protected String doInBackground(String... strings) {
                 String result = null;
                 String url = strings[0];
 
                 RequestBody formbody = new FormBody.Builder()
-                        .add("name","value")
+                        .add("message", "Это работает")
+                        .add("date", "14.11.2021")
                         .build();
-
 
                 Request request = new Request.Builder()
                         .url(url)
                         .post(formbody)
                         .build();
+
                 try (Response response = mClient.newCall(request).execute()) {
-                    if (!response.isSuccessful() && response.body() == null) {
+                    if ((!response.isSuccessful()) && (response.body() == null)) {
                         result = "Что-то пошло не так!";
+
                     } else {
                         result = response.body().string();
                     }
@@ -82,19 +74,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     e.printStackTrace();
                 }
                 return result;
+
             }
 
             @Override
-            protected void onPostExecute (String s) {
+            protected void onPostExecute(String s) {
                 mTextView.setText(s);
             }
         }.execute(URL);
-
     }
 
-    private void initViews () {
+    private void initViews() {
         mButton = findViewById(R.id.button);
-        mEditText = findViewById(R.id.editText);
         mTextView = findViewById(R.id.textView);
         mButton.setOnClickListener(this);
     }
